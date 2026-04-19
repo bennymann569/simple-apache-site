@@ -2,6 +2,7 @@
 public-html/data/users.csv
 public-html/data/customers.csv
 public-html/data/requests.csv
+public-html/logs/
 
 # Environment-specific files
 .env

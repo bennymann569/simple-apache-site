@@ -44,6 +44,8 @@ The current implementation stores data in CSV files under `public-html/data/`:
 
 These files are excluded from git via `.gitignore`.
 
+The project also supports runtime configuration through environment variables. Copy `.env.example` to `.env` and update values locally.
+
 ## Admin Workflow
 
 Admin pages include:
@@ -107,3 +109,53 @@ php -r "require 'public-html/database.php'; Database::migrate();"
 - All customer and admin passwords are hashed with PHP `password_hash()` before storage.
 - The mock payment flow is intentionally simple and not a real payment gateway. It is ready for future replacement with Stripe, PayPal, or another processor.
 - `public-html/data/` is kept out of git and should remain as runtime storage for this CSV-based prototype.
+
+## Change Timeline
+
+This timeline documents the main changes made during development and why they were implemented.
+
+1. Initial site skeleton
+   - Added a clean landing page and basic service pages.
+   - Included a quote request form and static content for the cleaning business.
+   - Purpose: provide a simple customer-facing site foundation.
+
+2. CSV-backed persistence
+   - Added CSV storage in `public-html/data/` for requests, customers, and admin users.
+   - Purpose: keep the prototype lightweight without requiring a database.
+
+3. Admin login and request management
+   - Added `login.php`, `auth.php`, `admin-requests.php`, and `request-details.php`.
+   - Implemented admin session handling and request status updates.
+   - Purpose: let administrators review quote requests and manage work flow.
+
+4. Customer signup/login and dashboard
+   - Added `customer-signup.php`, `customer-login.php`, `customer-dashboard.php`, and `customer-request-detail.php`.
+   - Implemented customer account creation, login, and request status visibility.
+   - Purpose: allow customers to sign up, track requests, and view their quote details.
+
+5. Mock payment workflow
+   - Added `pay.php` and payment status tracking for quote requests.
+   - Updated request status flow to include paid/unpaid tracking.
+   - Purpose: provide a simple payment completion experience that can be upgraded later.
+
+6. Admin user management
+   - Added `admin-users.php` for super-admin user management.
+   - Purpose: support multiple admin users and manage access securely.
+
+7. Email notification support
+   - Added SMTP-ready notification logic in `submit-quote.php`.
+   - Purpose: enable alerting when new quote requests arrive.
+
+8. Environment configuration and security hardening
+   - Added `public-html/config.php` and `.env.example` for environment-driven settings.
+   - Switched SMTP configuration to environment variables and removed hard-coded secrets.
+   - Added secure session handling and request logging.
+   - Purpose: improve secret management, reduce configuration drift, and harden the application.
+
+9. Database migration scaffolding
+   - Added `public-html/database.php`, model classes, and `sql/schema.sql`.
+   - Purpose: prepare the app for future migration from CSV files to a database-backed architecture.
+
+10. Documentation and operational notes
+    - Updated `README.md` with running instructions, environment guidance, and migration notes.
+    - Purpose: make it easier to deploy, maintain, and extend the project.

@@ -1,4 +1,12 @@
 <?php
+// Session hardening settings
+ini_set('session.cookie_httponly', '1');
+ini_set('session.use_strict_mode', '1');
+ini_set('session.use_only_cookies', '1');
+ini_set('session.cookie_samesite', 'Lax');
+if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') {
+    ini_set('session.cookie_secure', '1');
+}
 session_start();
 
 const USERS_CSV = __DIR__ . '/data/users.csv';
@@ -99,6 +107,7 @@ function login_admin(string $username, string $password): bool {
         return false;
     }
 
+    session_regenerate_id(true);
     $_SESSION['admin_authenticated'] = true;
     $_SESSION['admin_username'] = $username;
     $_SESSION['admin_role'] = $user['Role'] ?? 'admin';

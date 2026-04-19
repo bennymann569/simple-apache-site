@@ -234,23 +234,18 @@ $rows[] = [
 ];
 
 if (!write_csv($csvFile, $fields, $rows)) {
+    require_once __DIR__ . '/config.php';
+    app_log("Unable to store quote request for {$email} from ip=" . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
     http_response_code(500);
     echo 'Unable to store request. Please try again later.';
     exit;
 }
 
-// SMTP configuration: fill these values to enable reliable SMTP emailing.
-define('SMTP_HOST', '');
-define('SMTP_PORT', 587);
-define('SMTP_USER', '');
-define('SMTP_PASS', '');
-define('SMTP_SECURE', 'tls');
-define('SMTP_FROM_EMAIL', 'no-reply@your-cleaning-business.com');
-define('SMTP_TO_EMAIL', 'info@your-cleaning-business.com');
+require_once __DIR__ . '/config.php';
 
-define('SMTP_USE_PHP_MAIL', true);
+$smtp = smtp_config();
 
-if (filter_var(SMTP_TO_EMAIL, FILTER_VALIDATE_EMAIL)) {
+if (filter_var($smtp['to'], FILTER_VALIDATE_EMAIL)) {
     $emailData = [
         'Name' => $name,
         'Email' => $email,
@@ -262,21 +257,43 @@ if (filter_var(SMTP_TO_EMAIL, FILTER_VALIDATE_EMAIL)) {
     $subject = "New Cleaning Quote Request from $name";
     $bodyText = format_email_text($emailData);
     $bodyHtml = format_email_html($emailData);
-    $headers = "From: " . SMTP_FROM_EMAIL . "\r\n" .
+    $headers = "From: " . $smtp['from'] . "\r\n" .
         "Reply-To: $email\r\n" .
         "MIME-Version: 1.0\r\n" .
         "Content-Type: text/html; charset=UTF-8\r\n";
 
-    if (SMTP_HOST !== '') {
+    if ($smtp['host'] !== '') {
         $smtpBody = "Subject: $subject\r\n" .
-            "From: " . SMTP_FROM_EMAIL . "\r\n" .
-            "To: " . SMTP_TO_EMAIL . "\r\n" .
+            "From: " . $smtp['from'] . "\r\n" .
+            "To: " . $smtp['to'] . "\r\n" .
             "MIME-Version: 1.0\r\n" .
             "Content-Type: text/html; charset=UTF-8\r\n\r\n" .
             $bodyHtml;
-        smtp_send(SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM_EMAIL, SMTP_TO_EMAIL, $smtpBody, SMTP_SECURE === 'tls');
-    } elseif (SMTP_USE_PHP_MAIL) {
-        @mail(SMTP_TO_EMAIL, $subject, $bodyHtml, $headers);
+        if (!smtp_send($smtp['host'], $smtp['port'], $smtp['user'], $smtp['pass'], $smtp['from'], $smtp['to'], $smtpBody, $smtp['secure'] === 'tls')) {
+            app_log('SMTP delivery failed for quote request from ' . $email);
+        }
+    } elseif ($smtp['use_php_mail']) {
+        if (!@mail($smtp['to'], $subject, $bodyHtml, $headers)) {
+            app_log('PHP mail() delivery failed for quote request from ' . $email);
+        }
+    }
+
+        "Content-Type: text/html; charset=UTF-8\r\n";
+
+    if ($smtp['host'] !== '') {
+        $smtpBody = "Subject: $subject\r\n" .
+            "From: " . $smtp['from'] . "\r\n" .
+            "To: " . $smtp['to'] . "\r\n" .
+            "MIME-Version: 1.0\r\n" .
+            "Content-Type: text/html; charset=UTF-8\r\n\r\n" .
+            $bodyHtml;
+        if (!smtp_send($smtp['host'], $smtp['port'], $smtp['user'], $smtp['pass'], $smtp['from'], $smtp['to'], $smtpBody, $smtp['secure'] === 'tls')) {
+            app_log('SMTP delivery failed for quote request from ' . $email);
+        }
+    } elseif ($smtp['use_php_mail']) {
+        if (!@mail($smtp['to'], $subject, $bodyHtml, $headers)) {
+            app_log('PHP mail() delivery failed for quote request from ' . $email);
+        }
     }
 }
 

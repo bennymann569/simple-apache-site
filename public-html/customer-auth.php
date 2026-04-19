@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/config.php';
+configure_session();
 session_start();
 
 const CUSTOMERS_CSV = __DIR__ . '/data/customers.csv';
@@ -80,9 +82,11 @@ function login_customer(string $email, string $password): bool {
     }
 
     if (!password_verify($password, $customer['Password Hash'])) {
+        app_log("Customer login failed for email={$email} from ip=" . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
         return false;
     }
 
+    session_regenerate_id(true);
     $_SESSION['customer_authenticated'] = true;
     $_SESSION['customer_email'] = $email;
     $_SESSION['customer_name'] = $customer['Name'] ?? '';
