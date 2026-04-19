@@ -121,9 +121,12 @@ $requestCount = count($requests);
                 <p class="intro">View incoming quote requests and manage status from a secure admin portal.</p>
             </div>
             <div>
+                <?php if (is_super_admin()): ?>
+                    <a class="logout-link" href="admin-users.php">Manage Users</a>
+                <?php endif; ?>
                 <a class="logout-link" href="logout.php">Logout</a>
                 <a class="logout-link" href="request-details.php?id=<?= htmlspecialchars($requests[0]['ID'] ?? '', ENT_QUOTES, 'UTF-8') ?>">Last request</a>
-                <span class="tag">Admin Only</span>
+                <span class="tag"><?= is_super_admin() ? 'Super-Admin' : 'Admin' ?></span>
             </div>
         </header>
 

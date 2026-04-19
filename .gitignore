@@ -1,0 +1,17 @@
+# Data files (user-generated, not tracked)
+public-html/data/users.csv
+public-html/data/requests.csv
+
+# Environment-specific files
+.env
+.env.local
+*.log
+
+# IDE & OS
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db

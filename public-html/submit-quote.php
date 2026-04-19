@@ -159,7 +159,7 @@ function format_email_text(array $data): string {
 
 function format_email_html(array $data): string {
     return sprintf(
-        '<html><body><h2>New Cleaning Quote Request</h2><p><strong>Name:</strong> %s</p><p><strong>Email:</strong> %s</p><p><strong>Phone:</strong> %s</p><p><strong>Service:</strong> %s</p><p><strong>Details:</strong><br>%s</p><p><strong>Submitted:</strong> %s</p></body></html>',
+        '<html><body><h2>New Cleaning Quote Request</h2><p><strong>Name:</strong> %s</p><p><strong>Email:</strong> %s</p><p><strong>Phone:</strong> %s</p><p><strong>Service:</strong> %s</p><p><strong>Details:</strong><br>%s</p><p><strong>Submitted:</strong> %s</p><hr><p><em>Payment pending quote amount. Visit the admin dashboard to set a price and send the payment link to the customer.</em></p></body></html>',
         htmlspecialchars($data['Name'], ENT_QUOTES, 'UTF-8'),
         htmlspecialchars($data['Email'], ENT_QUOTES, 'UTF-8'),
         htmlspecialchars($data['Phone'], ENT_QUOTES, 'UTF-8'),
@@ -212,7 +212,7 @@ if (!is_dir($dataDir)) {
 }
 
 $csvFile = $dataDir . '/requests.csv';
-$fields = ['ID', 'Timestamp', 'Name', 'Email', 'Phone', 'Service', 'Details', 'Status', 'Updated At'];
+$fields = ['ID', 'Timestamp', 'Name', 'Email', 'Phone', 'Service', 'Details', 'Status', 'Updated At', 'Quote Amount', 'Payment Status', 'Payment ID'];
 $rows = ensure_csv_schema($csvFile, $fields);
 
 $id = uniqid('req_', true);
@@ -228,6 +228,9 @@ $rows[] = [
     'Details' => $details,
     'Status' => $status,
     'Updated At' => $timestamp,
+    'Quote Amount' => '',
+    'Payment Status' => 'Pending Quote',
+    'Payment ID' => '',
 ];
 
 if (!write_csv($csvFile, $fields, $rows)) {
