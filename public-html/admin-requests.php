@@ -100,6 +100,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'updat
         unset($request);
         save_request_csv($csvFile, $requests);
     }
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'set_price') {
+    $requestId = trim($_POST['id'] ?? '');
+    $quoteAmount = floatval($_POST['amount'] ?? 0);
+
+    if ($requestId !== '' && $quoteAmount > 0) {
+        $requests = read_request_csv($csvFile);
+        foreach ($requests as &$request) {
+            if (($request['ID'] ?? '') === $requestId) {
+                $request['Quote Amount'] = number_format($quoteAmount, 2, '.', '');
+                $request['Payment Status'] = 'Awaiting Payment';
+                $request['Updated At'] = date('Y-m-d H:i:s');
+                $message = 'Quote amount set to $' . number_format($quoteAmount, 2) . '.';
+                break;
+            }
+        }
+        unset($request);
+        save_request_csv($csvFile, $requests);
+    }
 }
 
 $requests = filter_requests(read_request_csv($csvFile), $query, $filterService, $filterStatus);
@@ -180,10 +198,10 @@ $requestCount = count($requests);
                             <th>ID</th>
                             <th>Submitted</th>
                             <th>Name</th>
-                            <th>Email</th>
                             <th>Service</th>
+                            <th>Amount</th>
+                            <th>Payment</th>
                             <th>Status</th>
-                            <th>Updated</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -193,22 +211,26 @@ $requestCount = count($requests);
                                 <td><?= htmlspecialchars($request['ID'] ?? '', ENT_QUOTES, 'UTF-8') ?></td>
                                 <td><?= htmlspecialchars($request['Timestamp'] ?? '', ENT_QUOTES, 'UTF-8') ?></td>
                                 <td><?= htmlspecialchars($request['Name'] ?? '', ENT_QUOTES, 'UTF-8') ?></td>
-                                <td><?= htmlspecialchars($request['Email'] ?? '', ENT_QUOTES, 'UTF-8') ?></td>
                                 <td><?= htmlspecialchars($request['Service'] ?? '', ENT_QUOTES, 'UTF-8') ?></td>
+                                <td>
+                                    <?php $amount = floatval($request['Quote Amount'] ?? 0); ?>
+                                    <?php if ($amount > 0): ?>
+                                        <strong>$<?= number_format($amount, 2) ?></strong>
+                                    <?php else: ?>
+                                        <span style="color: #94a3b8;">—</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td><?= htmlspecialchars($request['Payment Status'] ?? 'Pending Quote', ENT_QUOTES, 'UTF-8') ?></td>
                                 <td><?= htmlspecialchars($request['Status'] ?? '', ENT_QUOTES, 'UTF-8') ?></td>
-                                <td><?= htmlspecialchars($request['Updated At'] ?? '', ENT_QUOTES, 'UTF-8') ?></td>
                                 <td>
                                     <a class="view-link" href="request-details.php?id=<?= htmlspecialchars($request['ID'] ?? '', ENT_QUOTES, 'UTF-8') ?>">View</a>
+                                    <?php if (floatval($request['Quote Amount'] ?? 0) > 0 && ($request['Payment Status'] ?? '') === 'Awaiting Payment'): ?>
+                                        <a class="view-link" href="pay.php?id=<?= htmlspecialchars($request['ID'] ?? '', ENT_QUOTES, 'UTF-8') ?>" style="color: #10b981;">Pay Link</a>
+                                    <?php endif; ?>
                                     <form method="post" class="status-form-inline">
                                         <input type="hidden" name="id" value="<?= htmlspecialchars($request['ID'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
-                                        <select name="status">
-                                            <?php foreach ($statusOptions as $statusOption): ?>
-                                                <option value="<?= htmlspecialchars($statusOption, ENT_QUOTES, 'UTF-8') ?>" <?= (($request['Status'] ?? '') === $statusOption) ? 'selected' : '' ?>>
-                                                    <?= htmlspecialchars($statusOption, ENT_QUOTES, 'UTF-8') ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                        <button type="submit" name="action" value="update_status">Save</button>
+                                        <input type="number" name="amount" placeholder="Price" step="0.01" min="0.01" value="<?= htmlspecialchars($request['Quote Amount'] ?? '', ENT_QUOTES, 'UTF-8') ?>" style="width: 100px;">
+                                        <button type="submit" name="action" value="set_price" style="font-size: 0.85em; padding: 0.4rem 0.6rem;">Set Price</button>
                                     </form>
                                 </td>
                             </tr>

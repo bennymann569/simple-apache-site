@@ -1,5 +1,6 @@
 # Data files (user-generated, not tracked)
 public-html/data/users.csv
+public-html/data/customers.csv
 public-html/data/requests.csv
 
 # Environment-specific files

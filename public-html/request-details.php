@@ -153,7 +153,28 @@ function escape_html(string $value): string {
                     <span class="detail-label">Last Updated</span>
                     <span><?= escape_html($selectedRequest['Updated At'] ?? '') ?></span>
                 </div>
+                <div class="detail-row">
+                    <span class="detail-label">Quote Amount</span>
+                    <span>
+                        <?php $amount = floatval($selectedRequest['Quote Amount'] ?? 0); ?>
+                        <?php if ($amount > 0): ?>
+                            <strong style="color: var(--accent);">$<?= number_format($amount, 2) ?></strong>
+                        <?php else: ?>
+                            <span style="color: #94a3b8;">Not yet quoted</span>
+                        <?php endif; ?>
+                    </span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Payment Status</span>
+                    <span><?= escape_html($selectedRequest['Payment Status'] ?? 'Pending Quote') ?></span>
+                </div>
             </div>
+
+            <?php if (floatval($selectedRequest['Quote Amount'] ?? 0) > 0 && ($selectedRequest['Payment Status'] ?? '') !== 'Completed'): ?>
+                <div class="quote-card">
+                    <a class="btn-primary" href="pay.php?id=<?= escape_html($selectedRequest['ID'] ?? '') ?>" style="display: inline-block; text-decoration: none;">Send Payment Link to Customer</a>
+                </div>
+            <?php endif; ?>
 
             <div class="quote-card">
                 <form method="post" class="status-form">
