@@ -14,12 +14,33 @@ spec:
       labels:
         app: simple-apache-site
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 33  # www-data
+        runAsGroup: 33
+        fsGroup: 33
       containers:
         - name: web
           image: simple-apache-site:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 33
+            runAsGroup: 33
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
           envFrom:
             - configMapRef:
                 name: simple-apache-site-config
@@ -28,7 +49,12 @@ spec:
           volumeMounts:
             - name: data-volume
               mountPath: /var/www/html/data
+            - name: tmp-volume
+              mountPath: /tmp
       volumes:
         - name: data-volume
           persistentVolumeClaim:
             claimName: simple-apache-site-data
+        - name: tmp-volume
+          emptyDir: {}
+

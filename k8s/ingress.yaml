@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: simple-apache-site-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"  # If using cert-manager
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - your-domain.com  # Replace with your domain
+      secretName: simple-apache-site-tls
+  rules:
+    - host: your-domain.com  # Replace with your domain
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: simple-apache-site-service
+                port:
+                  number: 80

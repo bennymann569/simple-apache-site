@@ -178,12 +178,15 @@ kubectl apply -f k8s/configmap.yaml
 kubectl apply -f k8s/secret.yaml
 kubectl apply -f k8s/deployment.yaml
 kubectl apply -f k8s/service.yaml
+kubectl apply -f k8s/networkpolicy.yaml  # Security: restricts pod traffic
+kubectl apply -f k8s/ingress.yaml  # Optional: for TLS and domain routing
 ```
 
 4. Access the service:
 
 - Use `kubectl get svc simple-apache-site-service` to see the external IP or node port.
 - For `minikube`, run `minikube service simple-apache-site-service`.
+- With Ingress, access via your domain (update `k8s/ingress.yaml` first).
 
 ### Environment management
 
@@ -192,6 +195,95 @@ The app reads environment values from Kubernetes `ConfigMap` and `Secret`. You c
 ### Persistent data
 
 `k8s/pvc.yaml` preserves `public-html/data/` storage in the cluster so quote requests and user records survive pod restarts.
+
+### Security notes
+
+- The deployment runs as non-root user (`www-data`) with restricted capabilities.
+- NetworkPolicy limits ingress traffic to the ingress controller and same namespace.
+- Use Ingress with TLS for encrypted external access.
+- Secrets are base64-encoded; consider external secret management for production.
+
+### Improving Secret Management
+
+For production deployments, avoid storing sensitive values directly in Kubernetes Secrets (even base64-encoded). Instead, use an external secret management system like HashiCorp Vault, AWS Secrets Manager, or Azure Key Vault, integrated via the External Secrets Operator (ESO).
+
+#### Install External Secrets Operator
+
+First, install ESO in your cluster (requires Helm):
+
+```bash
+helm repo add external-secrets https://charts.external-secrets.io
+helm install external-secrets external-secrets/external-secrets -n external-secrets-system --create-namespace
+```
+
+#### Create a SecretStore
+
+This example uses a dummy backend for illustration. Replace with your actual secret store (Vault, AWS, etc.).
+
+```yaml
+apiVersion: external-secrets.io/v1beta1
+kind: SecretStore
+metadata:
+  name: simple-apache-site-secret-store
+  namespace: default
+spec:
+  provider:
+    # Example: AWS Secrets Manager
+    aws:
+      service: SecretsManager
+      region: us-east-1
+      auth:
+        jwt:
+          serviceAccountRef:
+            name: external-secrets-sa
+    # For Vault:
+    # vault:
+    #   server: "https://vault.example.com"
+    #   path: "secret"
+    #   auth:
+    #     kubernetes:
+    #       mountPath: "kubernetes"
+    #       role: "external-secrets"
+```
+
+#### Create an ExternalSecret
+
+This pulls secrets from the external store and creates a Kubernetes Secret.
+
+```yaml
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: simple-apache-site-external-secret
+  namespace: default
+spec:
+  refreshInterval: 15s
+  secretStoreRef:
+    name: simple-apache-site-secret-store
+    kind: SecretStore
+  target:
+    name: simple-apache-site-secret
+    creationPolicy: Owner
+  data:
+    - secretKey: SMTP_USER
+      remoteRef:
+        key: prod/cleaning-service/smtp
+        property: username
+    - secretKey: SMTP_PASS
+      remoteRef:
+        key: prod/cleaning-service/smtp
+        property: password
+    - secretKey: DB_USER
+      remoteRef:
+        key: prod/cleaning-service/db
+        property: username
+    - secretKey: DB_PASS
+      remoteRef:
+        key: prod/cleaning-service/db
+        property: password
+```
+
+Apply these manifests, then update the deployment to reference the ExternalSecret-generated Secret. This keeps sensitive data out of your Git repository and rotates automatically.
 
 ## Change Timeline
 
