@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simple-apache-site
+  labels:
+    app: simple-apache-site
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: simple-apache-site
+  template:
+    metadata:
+      labels:
+        app: simple-apache-site
+    spec:
+      containers:
+        - name: web
+          image: simple-apache-site:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: simple-apache-site-config
+            - secretRef:
+                name: simple-apache-site-secret
+          volumeMounts:
+            - name: data-volume
+              mountPath: /var/www/html/data
+      volumes:
+        - name: data-volume
+          persistentVolumeClaim:
+            claimName: simple-apache-site-data

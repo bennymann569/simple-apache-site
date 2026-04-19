@@ -146,6 +146,53 @@ Then browse to `http://localhost:8080`.
 - The app reads `.env` from `/var/www/.env` if present, or directly from container environment variables.
 - Mount `public-html/data` from the host to preserve runtime CSV records across container restarts.
 
+## Kubernetes Integration
+
+A Kubernetes deployment is included under `k8s/`.
+
+- `k8s/deployment.yaml` — Deployment for the Apache/PHP web app
+- `k8s/service.yaml` — LoadBalancer Service exposing port 80
+- `k8s/configmap.yaml` — non-sensitive configuration values
+- `k8s/secret.yaml` — sensitive environment values such as passwords
+- `k8s/pvc.yaml` — persistent volume claim for CSV storage
+
+### Deploy to Kubernetes
+
+1. Build the image:
+
+```bash
+docker build -t simple-apache-site:latest .
+```
+
+2. If you use `kind`, load the image into the cluster:
+
+```bash
+kind load docker-image simple-apache-site:latest
+```
+
+3. Apply the manifests:
+
+```bash
+kubectl apply -f k8s/pvc.yaml
+kubectl apply -f k8s/configmap.yaml
+kubectl apply -f k8s/secret.yaml
+kubectl apply -f k8s/deployment.yaml
+kubectl apply -f k8s/service.yaml
+```
+
+4. Access the service:
+
+- Use `kubectl get svc simple-apache-site-service` to see the external IP or node port.
+- For `minikube`, run `minikube service simple-apache-site-service`.
+
+### Environment management
+
+The app reads environment values from Kubernetes `ConfigMap` and `Secret`. You can update values with `kubectl apply -f k8s/configmap.yaml` or `kubectl apply -f k8s/secret.yaml`.
+
+### Persistent data
+
+`k8s/pvc.yaml` preserves `public-html/data/` storage in the cluster so quote requests and user records survive pod restarts.
+
 ## Change Timeline
 
 This timeline documents the main changes made during development and why they were implemented.
