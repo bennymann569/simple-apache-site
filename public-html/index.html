@@ -10,36 +10,98 @@
     <main class="page">
         <header>
             <div>
-                <h1>Modern Apache Static Site</h1>
-                <p class="intro">A refreshed landing page for your Apache-hosted static website. This version uses responsive layout, polished typography, and subtle card styling.</p>
+                <h1>Pristine Pro Cleaning</h1>
+                <p class="intro">Expert home and commercial cleaning services for a healthier, brighter space. Reliable teams, eco-friendly products, and attention to every detail.</p>
             </div>
-            <span class="tag">Static HTML</span>
+            <span class="tag">Professional Cleaning</span>
         </header>
 
-        <div class="grid">
-            <section class="card">
-                <h2>Responsive layout</h2>
-                <p>Designed to look great on mobile, tablet, and desktop without any external framework.</p>
-            </section>
-            <section class="card">
-                <h2>Clean presentation</h2>
-                <p>Modern spacing, contrast, and type scale make the page easy to read and visually appealing.</p>
-            </section>
-            <section class="card">
-                <h2>Apache-ready</h2>
-                <p>Ready to deploy to <code>/var/www/html</code> on your Apache server with no build step required.</p>
-            </section>
+        <div class="section services">
+            <h2 class="section-title">Our Cleaning Services</h2>
+            <div class="grid">
+                <section class="card">
+                    <h2>Home Cleaning</h2>
+                    <p>Expert residential cleaning for kitchens, bathrooms, bedrooms, and living areas with flexible weekly or monthly plans.</p>
+                </section>
+                <section class="card">
+                    <h2>Office Cleaning</h2>
+                    <p>Professional commercial cleaning for offices, coworking spaces, and retail environments to keep your workplace fresh and productive.</p>
+                </section>
+                <section class="card">
+                    <h2>Deep & Move-Out</h2>
+                    <p>Thorough deep cleans and move-in/move-out services designed to leave every space spotless and ready for occupancy.</p>
+                </section>
+            </div>
+        </div>
+
+        <div class="section features">
+            <h2 class="section-title">Why Choose Pristine Pro</h2>
+            <div class="feature-grid">
+                <article class="feature-item">
+                    <h3>Trusted Professionals</h3>
+                    <p>Insured, background-checked teams trained to deliver reliable cleaning with a focus on trust and quality.</p>
+                </article>
+                <article class="feature-item">
+                    <h3>Eco-Friendly Products</h3>
+                    <p>We use safe, green cleaning supplies that protect your family, employees, and the environment.</p>
+                </article>
+                <article class="feature-item">
+                    <h3>Flexible Scheduling</h3>
+                    <p>Book one-time deep cleans or recurring maintenance services at times that fit your schedule.</p>
+                </article>
+                <article class="feature-item">
+                    <h3>100% Satisfaction</h3>
+                    <p>We stand behind every service with a satisfaction guarantee and prompt follow-up if you need adjustments.</p>
+                </article>
+            </div>
+        </div>
+
+        <div class="section quote">
+            <h2 class="section-title">Request a Free Quote</h2>
+            <div class="quote-card">
+                <p>Share a few details and our team will follow up with a customized estimate for your home or office cleaning.</p>
+                <form action="mailto:info@your-cleaning-business.com" method="post" enctype="text/plain">
+                    <div class="form-grid">
+                        <label>
+                            Full name
+                            <input type="text" name="name" placeholder="Jane Doe" required>
+                        </label>
+                        <label>
+                            Email address
+                            <input type="email" name="email" placeholder="jane@example.com" required>
+                        </label>
+                        <label>
+                            Phone number
+                            <input type="tel" name="phone" placeholder="(555) 012-3456">
+                        </label>
+                        <label>
+                            Service type
+                            <select name="service">
+                                <option>Home Cleaning</option>
+                                <option>Office Cleaning</option>
+                                <option>Deep Cleaning</option>
+                                <option>Move-Out Cleaning</option>
+                            </select>
+                        </label>
+                    </div>
+                    <label>
+                        Project details
+                        <textarea name="details" rows="4" placeholder="Tell us what you need." required></textarea>
+                    </label>
+                    <button class="btn-primary" type="submit">Request a Quote</button>
+                </form>
+            </div>
         </div>
 
         <div class="status-bar">
-            <div class="status-text" id="status-text">Loading site status...</div>
+            <div class="status-text" id="status-text">Ready to book your next clean.</div>
             <div class="button-group">
                 <button id="toggle-theme" type="button">Toggle theme</button>
                 <button id="update-time" type="button">Refresh time</button>
             </div>
         </div>
 
-        <p class="footer">Visit your server URL in a browser, for example <strong>http://your-server-address/</strong>, to see the deployed page.</p>
+        <p class="footer">Call us at <strong>(555) 012-3456</strong> or visit <strong>http://your-cleaning-business.com/</strong> to learn more.</p>
     </main>
     <script src="script.js"></script>
 </body>
