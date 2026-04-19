@@ -1,0 +1,8 @@
+.git
+.gitignore
+README.md
+instructions.md
+*.md
+.env
+public-html/data/
+public-html/logs/

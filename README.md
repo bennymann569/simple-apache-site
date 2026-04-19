@@ -110,6 +110,42 @@ php -r "require 'public-html/database.php'; Database::migrate();"
 - The mock payment flow is intentionally simple and not a real payment gateway. It is ready for future replacement with Stripe, PayPal, or another processor.
 - `public-html/data/` is kept out of git and should remain as runtime storage for this CSV-based prototype.
 
+## Container Packaging
+
+This project can be packaged as a Docker image for easy deployment.
+
+### Build the container image
+
+From the project root:
+
+```bash
+docker build -t simple-apache-site .
+```
+
+### Run the container
+
+Use environment variables or mount a `.env` file into the container for SMTP and optional DB configuration.
+
+Example with `.env` mount and persistent CSV storage:
+
+```bash
+cp .env.example .env
+# edit .env as needed
+
+docker run --rm -p 8080:80 \
+  -v "$PWD/public-html/data:/var/www/html/data" \
+  -v "$PWD/.env:/var/www/.env" \
+  simple-apache-site
+```
+
+Then browse to `http://localhost:8080`.
+
+### Notes for container use
+
+- The web root is served from `/var/www/html` inside the container.
+- The app reads `.env` from `/var/www/.env` if present, or directly from container environment variables.
+- Mount `public-html/data` from the host to preserve runtime CSV records across container restarts.
+
 ## Change Timeline
 
 This timeline documents the main changes made during development and why they were implemented.
