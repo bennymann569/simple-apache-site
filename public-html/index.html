@@ -1,10 +1,46 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome to My Apache Site</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Hello from Apache!</h1>
-    <p>This is a simple static site served by an Apache web server.</p>
+    <main class="page">
+        <header>
+            <div>
+                <h1>Modern Apache Static Site</h1>
+                <p class="intro">A refreshed landing page for your Apache-hosted static website. This version uses responsive layout, polished typography, and subtle card styling.</p>
+            </div>
+            <span class="tag">Static HTML</span>
+        </header>
+
+        <div class="grid">
+            <section class="card">
+                <h2>Responsive layout</h2>
+                <p>Designed to look great on mobile, tablet, and desktop without any external framework.</p>
+            </section>
+            <section class="card">
+                <h2>Clean presentation</h2>
+                <p>Modern spacing, contrast, and type scale make the page easy to read and visually appealing.</p>
+            </section>
+            <section class="card">
+                <h2>Apache-ready</h2>
+                <p>Ready to deploy to <code>/var/www/html</code> on your Apache server with no build step required.</p>
+            </section>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-text" id="status-text">Loading site status...</div>
+            <div class="button-group">
+                <button id="toggle-theme" type="button">Toggle theme</button>
+                <button id="update-time" type="button">Refresh time</button>
+            </div>
+        </div>
+
+        <p class="footer">Visit your server URL in a browser, for example <strong>http://your-server-address/</strong>, to see the deployed page.</p>
+    </main>
+    <script src="script.js"></script>
 </body>
 </html>
