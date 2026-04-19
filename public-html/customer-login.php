@@ -48,7 +48,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </label>
                 <label>
                     Password
-                    <input type="password" name="password" required>
+                    <div class="password-field">
+                        <input id="login-password" type="password" name="password" required>
+                        <button type="button" class="password-toggle" data-target="login-password">Show</button>
+                    </div>
                 </label>
                 <button class="btn-primary" type="submit">Sign In</button>
             </form>
@@ -58,5 +61,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </p>
         </div>
     </main>
+    <script src="script.js"></script>
 </body>
 </html>

@@ -73,11 +73,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </label>
                 <label>
                     Password
-                    <input type="password" name="password" required minlength="8">
+                    <div class="password-field">
+                        <input id="signup-password" type="password" name="password" required minlength="8">
+                        <button type="button" class="password-toggle" data-target="signup-password">Show</button>
+                    </div>
                 </label>
                 <label>
                     Confirm Password
-                    <input type="password" name="password_confirm" required minlength="8">
+                    <div class="password-field">
+                        <input id="signup-password-confirm" type="password" name="password_confirm" required minlength="8">
+                        <button type="button" class="password-toggle" data-target="signup-password-confirm">Show</button>
+                    </div>
                 </label>
                 <button class="btn-primary" type="submit">Create Account</button>
             </form>
@@ -86,5 +92,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </p>
         </div>
     </main>
+    <script src="script.js"></script>
 </body>
 </html>

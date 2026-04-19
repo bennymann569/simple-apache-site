@@ -29,5 +29,23 @@ if (refreshButton) {
     });
 }
 
+function initPasswordToggles() {
+    document.querySelectorAll('.password-toggle').forEach((button) => {
+        button.addEventListener('click', () => {
+            const targetId = button.dataset.target;
+            const input = document.getElementById(targetId);
+            if (!input) {
+                return;
+            }
+
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+            button.textContent = isPassword ? 'Hide' : 'Show';
+        });
+    });
+}
+
+initPasswordToggles();
+
 setStatus('Page loaded successfully.');
 updateFooter();
