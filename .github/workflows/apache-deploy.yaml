@@ -1,3 +1,69 @@
+
+# name: Apache Deploy
+
+# on:
+#   push:
+#     branches:
+#       - main
+#     paths:
+#       - 'public-html/**'
+
+# jobs:
+#   deploy:
+#     name: Deploy static site to Apache server
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
+
+#       - name: Copy site files to Apache server
+#         uses: appleboy/scp-action@v0.1.1
+#         with:
+#           host: ${{ secrets.SSH_HOST }}
+#           username: ${{ secrets.SSH_USER }}
+#           key: ${{ secrets.SSH_KEY }}
+#           port: ${{ secrets.SSH_PORT || '22' }}
+#           source: 'public-html/*'
+#           target: '/var/www/html'
+#           recursive: true
+
+#       - name: Restart Apache service
+#         uses: appleboy/ssh-action@v0.1.5
+#         with:
+#           host: ${{ secrets.SSH_HOST }}
+#           username: ${{ secrets.SSH_USER }}
+#           key: ${{ secrets.SSH_KEY }}
+#           port: ${{ secrets.SSH_PORT || '22' }}
+#           script: |
+#             sudo systemctl restart apache2 || sudo systemctl restart httpd
+
+#       - name: Post-deployment verification
+#         uses: appleboy/ssh-action@v0.1.5
+#         with:
+#           host: ${{ secrets.SSH_HOST }}
+#           username: ${{ secrets.SSH_USER }}
+#           key: ${{ secrets.SSH_KEY }}
+#           port: ${{ secrets.SSH_PORT || '22' }}
+#           script: |
+#             sudo systemctl is-active --quiet apache2 || sudo systemctl is-active --quiet httpd
+#             ls -la /var/www/html | sed -n '1,20p'
+#             curl --fail --silent --show-error http://127.0.0.1/ | head -n 20
+
+#       - name: Notify on deployment failure
+#         if: failure()
+#         env:
+#           WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
+#           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+#         run: |
+#           if [ -z "$WEBHOOK_URL" ]; then
+#             echo "No notification webhook defined; skipping failure notification."
+#             exit 0
+#           fi
+#           payload="{\"text\":\"Deployment failed for ${GITHUB_REPOSITORY} on ${GITHUB_REF}. See ${RUN_URL}\"}"
+#           curl --fail --silent --show-error -X POST -H "Content-Type: application/json" -d "$payload" "$WEBHOOK_URL"
+
+
 name: Apache Deploy
 
 on:
@@ -5,59 +71,133 @@ on:
     branches:
       - main
     paths:
-      - 'public-html/**'
+      # Only run this workflow when files inside public-html change.
+      - "public-html/**"
+
+  # Allow manual deployment from the Actions tab when needed.
+  workflow_dispatch:
+
+# Prevent overlapping deployments for the same branch/ref.
+# If a newer commit is pushed, cancel the older in-progress deploy.
+concurrency:
+  group: apache-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+# Restrict the default token to the minimum needed for checkout.
+permissions:
+  contents: read
 
 jobs:
   deploy:
     name: Deploy static site to Apache server
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+
+    env:
+      # Centralise common values so they are easier to update later.
+      REMOTE_PATH: /var/www/html
+      SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
 
     steps:
+      # Step 1:
+      # Check out the repository so the runner can access public-html.
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Copy site files to Apache server
-        uses: appleboy/scp-action@v0.1.1
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          port: ${{ secrets.SSH_PORT || '22' }}
-          source: 'public-html/*'
-          target: '/var/www/html'
-          recursive: true
+      # Step 2:
+      # Fail early if the expected site directory does not exist.
+      # Also print a short file listing to aid troubleshooting.
+      - name: Validate source directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d public-html
+          find public-html -maxdepth 2 -type f | sed -n '1,20p'
 
-      - name: Restart Apache service
-        uses: appleboy/ssh-action@v0.1.5
+      # Step 3:
+      # Copy the site contents to the remote Apache document root.
+      # Using the v1 action line keeps you on the maintained major version.
+      # The trailing slash on source copies the directory contents, not the folder itself.
+      - name: Sync site files to server
+        uses: appleboy/scp-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          port: ${{ secrets.SSH_PORT || '22' }}
+          port: ${{ env.SSH_PORT }}
+          source: "public-html/*"
+          target: ${{ env.REMOTE_PATH }}
+          overwrite: true
+
+      # Step 4:
+      # Validate Apache configuration before reloading the service.
+      # Reload is safer than restart for routine content/config updates because
+      # it avoids unnecessary downtime when the service is already healthy.
+      # This step supports both Debian/Ubuntu (apache2) and RHEL-family (httpd).
+      - name: Validate Apache config and reload service
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ env.SSH_PORT }}
           script: |
-            sudo systemctl restart apache2 || sudo systemctl restart httpd
+            set -euo pipefail
 
+            if command -v apache2ctl >/dev/null 2>&1; then
+              sudo apache2ctl configtest
+              sudo systemctl reload apache2
+              sudo systemctl is-active --quiet apache2
+            elif command -v httpd >/dev/null 2>&1; then
+              sudo httpd -t
+              sudo systemctl reload httpd
+              sudo systemctl is-active --quiet httpd
+            else
+              echo "Apache binary not found"
+              exit 1
+            fi
+
+      # Step 5:
+      # Perform basic post-deployment checks on the target host.
+      # This confirms the target directory exists, shows a short listing,
+      # and verifies Apache can serve content locally over HTTP.
       - name: Post-deployment verification
-        uses: appleboy/ssh-action@v0.1.5
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          port: ${{ secrets.SSH_PORT || '22' }}
+          port: ${{ env.SSH_PORT }}
           script: |
-            sudo systemctl is-active --quiet apache2 || sudo systemctl is-active --quiet httpd
-            ls -la /var/www/html | sed -n '1,20p'
+            set -euo pipefail
+
+            test -d "${{ env.REMOTE_PATH }}"
+            ls -la "${{ env.REMOTE_PATH }}" | sed -n '1,20p'
             curl --fail --silent --show-error http://127.0.0.1/ | head -n 20
 
+      # Step 6:
+      # Send a failure notification if the workflow fails and a webhook is configured.
+      # The guard allows the workflow to skip notification cleanly when no webhook exists.
       - name: Notify on deployment failure
         if: failure()
         env:
           WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        shell: bash
         run: |
-          if [ -z "$WEBHOOK_URL" ]; then
+          set -euo pipefail
+
+          if [ -z "${WEBHOOK_URL:-}" ]; then
             echo "No notification webhook defined; skipping failure notification."
             exit 0
           fi
-          payload="{\"text\":\"Deployment failed for ${GITHUB_REPOSITORY} on ${GITHUB_REF}. See ${RUN_URL}\"}"
-          curl --fail --silent --show-error -X POST -H "Content-Type: application/json" -d "$payload" "$WEBHOOK_URL"
+
+          payload=$(printf '%s' \
+            "{\"text\":\"Deployment failed for ${GITHUB_REPOSITORY} on ${GITHUB_REF_NAME}. See ${RUN_URL}\"}")
+
+          curl --fail --silent --show-error \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -d "$payload" \
+            "$WEBHOOK_URL"
